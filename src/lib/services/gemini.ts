@@ -1,4 +1,4 @@
-import './setupProxyFetch';
+// import './setupProxyFetch';
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
