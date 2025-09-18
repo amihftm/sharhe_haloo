@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+type CaseAttemptConversationSummaryReport {
+  interpersonal_skills  CaseAttemptConversationSummaryReportInterpersonalSkills
+  learning_objectives   CaseAttemptConversationSummaryReportLearningObjectives
+  questioning_technique CaseAttemptConversationSummaryReportQuestioningTechnique
+}
+
+type CaseAttemptConversationSummaryReportInterpersonalSkills {
+  feedback String
+  score    Int
+}
+
+type CaseAttemptConversationSummaryReportLearningObjectives {
+  achieved_items String[]
+  max_score      Int
+  missed_items   String[]
+  score          Int
+}
+
+type CaseAttemptConversationSummaryReportQuestioningTechnique {
+  feedback String
+  score    Int
+}
+
+type CaseAttemptEhrAccuracyReport {
+  final_score CaseAttemptEhrAccuracyReportFinalScore
+  sections    CaseAttemptEhrAccuracyReportSections[]
+}
+
+type CaseAttemptEhrAccuracyReportFinalScore {
+  max_total_score Int
+  total_score     Int
+}
+
+type CaseAttemptEhrAccuracyReportSections {
+  justification String
+  max_points    Int
+  score         Int
+  section_name  String
+}
+
+type CaseAttemptWrittenHistory {
+  allergies          String
+  chiefComplaint     String
+  drugHistory        String
+  familyHistory      String
+  pastMedicalHistory String
+  presentIllness     String
+  reviewOfSystems    String
+  socialHistory      String
+}
+
+type CaseLearningObjectives {
+  category  String
+  id        String
+  score     Int
+  statement String
+}
+
+type CasePhysicalExamFindings {
+  raw String
+}
+
+type CaseSystemPrompt {
+  chiefComplaint        String
+  demographics          CaseSystemPromptDemographics
+  drugHistory           String
+  education             String
+  emotional_state       String
+  familyHistory         String
+  pastMedicalHistory    String
+  pastSurgicalHistory   String
+  persona               String
+  presentIllnessHistory String
+  reviewOfSystems       CaseSystemPromptReviewOfSystems
+  socialHistory         String
+}
+
+type CaseSystemPromptDemographics {
+  age            Int
+  birthLocation  String
+  gender         String
+  livingLocation String
+  name           String
+}
+
+type CaseSystemPromptReviewOfSystems {
+  negative CaseSystemPromptReviewOfSystemsNegative[]
+  positive CaseSystemPromptReviewOfSystemsPositive[]
+}
+
+type CaseSystemPromptReviewOfSystemsNegative {
+  value String
+}
+
+type CaseSystemPromptReviewOfSystemsPositive {
+  value String
+}
+
+model Account {
+  id                String @id @default(auto()) @map("_id") @db.ObjectId
+  access_token      String
+  expires_at        BigInt
+  id_token          String
+  provider          String
+  providerAccountId String
+  scope             String
+  token_type        String
+  type              String
+  userId            String @db.ObjectId
+}
+
+model Case {
+  id                    String                   @id @default(auto()) @map("_id") @db.ObjectId
+  authorId              String                   @db.ObjectId
+  createdAt             DateTime                 @db.Date
+  description           String
+  differentialDiagnosis String[]
+  finalDiagnosis        String
+  keywords              String[]
+  learningObjectives    CaseLearningObjectives[]
+  physicalExamFindings  CasePhysicalExamFindings
+  riveFileUrl           String
+  specialty             String
+  systemPrompt          CaseSystemPrompt
+  title                 String
+  updatedAt             DateTime                 @db.Date
+}
+
+model CaseAttempt {
+  id                          String                               @id @default(auto()) @map("_id") @db.ObjectId
+  caseId                      String                               @db.ObjectId
+  conversation_summary_report CaseAttemptConversationSummaryReport
+  createdAt                   DateTime                             @db.Date
+  ehr_accuracy_report         CaseAttemptEhrAccuracyReport
+  status                      String
+  updatedAt                   DateTime                             @db.Date
+  userId                      String                               @db.ObjectId
+  writtenHistory              CaseAttemptWrittenHistory
+}
+
+model ChatMessage {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  attemptId        String   @db.ObjectId
+  content          String
+  createdAt        DateTime @db.Date
+  emotional_states String?
+  role             String
+}
+
+model PhysicalExaminationRequest {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  attemptId String   @db.ObjectId
+  category  String
+  createdAt DateTime @db.Date
+  request   String
+  response  String
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  expires      DateTime @db.Date
+  sessionToken String
+  userId       String   @db.ObjectId
+}
+
+model User {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  email         String
+  emailVerified DateTime @db.Date
+  image         String
+  name          String
+  role          String
+}
