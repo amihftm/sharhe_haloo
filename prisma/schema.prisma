@@ -1,11 +1,27 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
+
+enum ChatRole {
+  USER
+  AI
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
 }
 
 type CaseAttemptConversationSummaryReport {
@@ -107,77 +123,100 @@ type CaseSystemPromptReviewOfSystemsPositive {
 }
 
 model Account {
-  id                String @id @default(auto()) @map("_id") @db.ObjectId
-  access_token      String
-  expires_at        BigInt
-  id_token          String
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
   provider          String
   providerAccountId String
-  scope             String
-  token_type        String
-  type              String
-  userId            String @db.ObjectId
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
 }
 
 model Case {
   id                    String                   @id @default(auto()) @map("_id") @db.ObjectId
+  title                 String
+  author                User  @relation(fields: [authorId], references: [id])
   authorId              String                   @db.ObjectId
-  createdAt             DateTime                 @db.Date
   description           String
-  differentialDiagnosis String[]
-  finalDiagnosis        String
-  keywords              String[]
-  learningObjectives    CaseLearningObjectives[]
-  physicalExamFindings  CasePhysicalExamFindings
   riveFileUrl           String
   specialty             String
+  keywords              String[]
+  learningObjectives    CaseLearningObjectives[]
   systemPrompt          CaseSystemPrompt
-  title                 String
+  physicalExamFindings  CasePhysicalExamFindings
+  differentialDiagnosis String[]
+  finalDiagnosis        String
+  attempts              CaseAttempt[]
+  createdAt             DateTime                 @db.Date
   updatedAt             DateTime                 @db.Date
 }
 
 model CaseAttempt {
   id                          String                               @id @default(auto()) @map("_id") @db.ObjectId
-  caseId                      String                               @db.ObjectId
-  conversation_summary_report CaseAttemptConversationSummaryReport
-  createdAt                   DateTime                             @db.Date
-  ehr_accuracy_report         CaseAttemptEhrAccuracyReport
-  status                      String
-  updatedAt                   DateTime                             @db.Date
   userId                      String                               @db.ObjectId
+  user                        User   @relation(fields: [userId], references: [id])
+  caseId                      String                               @db.ObjectId
+  case                        Case   @relation(fields: [caseId], references: [id])
+  messages                    ChatMessage[]
+  examinationRequests         PhysicalExaminationRequest[]
+  status                      AttemptStatus                        @default(IN_PROGRESS)
   writtenHistory              CaseAttemptWrittenHistory
+  conversation_summary_report CaseAttemptConversationSummaryReport
+  ehr_accuracy_report         CaseAttemptEhrAccuracyReport
+  createdAt                   DateTime                             @db.Date
+  updatedAt                   DateTime                             @db.Date
+  @@unique([userId, caseId])
 }
 
 model ChatMessage {
   id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  attempt          CaseAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   attemptId        String   @db.ObjectId
-  content          String
-  createdAt        DateTime @db.Date
+  role             ChatRole
+  content          String   @db.String
   emotional_states String?
-  role             String
+  createdAt        DateTime @db.Date
 }
 
 model PhysicalExaminationRequest {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  attempt   CaseAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   attemptId String   @db.ObjectId
   category  String
-  createdAt DateTime @db.Date
-  request   String
-  response  String
-}
-
-model Session {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  expires      DateTime @db.Date
-  sessionToken String
-  userId       String   @db.ObjectId
+  request   String   @db.String
+  response  String   @db.String
+  createdAt DateTime @default(now())
 }
 
 model User {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  email         String
-  emailVerified DateTime @db.Date
-  image         String
-  name          String
-  role          String
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String?   @unique
+  phone         String?
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+
+  /// The user's primary role in the system.
+  role             UserRole      @default(STUDENT)
+  /// The educational institution the user belongs to.
+  institution      String?
+  /// The user's current level of study (e.g., "extern", "Intern").
+  educationalLevel String?
+  /// A JSON object to store metadata about the user's knowledge, perhaps for adaptive learning.
+  userKnowledge    Json?
+
+  /// A list of all case simulations this user has attempted.
+  caseAttempts CaseAttempt[]
+  // A list of generated case by this user.
+  cases Case[]
 }
