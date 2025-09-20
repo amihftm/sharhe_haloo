@@ -41,11 +41,11 @@ export function MobileNav() {
             داشبورد
           </Link>
           <Link
-            href="/cases"
+            href="/dashboard/student/clinics"
             className="transition-colors hover:text-foreground/80 text-foreground/60"
             onClick={() => setIsOpen(false)}
           >
-            کیس‌های بالینی
+            کلینیک‌ها
           </Link>
           <Link
             href="/about"
