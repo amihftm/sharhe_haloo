@@ -34,9 +34,11 @@ export default function RootLayout({
         <Providers>
           <div className="relative flex min-h-screen flex-col bg-background">
             <AppHeader />
-            <div className='flex flex-1'>
-              <div className="container mx-auto px-4 py-8 min-h-full">{children}</div>
+            <div className="flex flex-1">
+              <div className="container mx-auto px-4 py-8 min-h-full">
+                {children}
               </div>
+            </div>
             <AppFooter />
           </div>
         </Providers>

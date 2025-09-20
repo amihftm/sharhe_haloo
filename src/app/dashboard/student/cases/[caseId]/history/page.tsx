@@ -12,10 +12,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { SendHorizontal, Bot, Loader2, UserRound } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useCaseStep } from '../_components/CaseStepProvider';
 import { CharacterExpression } from '@/components/shared/Character';
 import { Textarea } from '@/components/ui/textarea';
+import { useCurrentUser } from '@/context/user-context';
 const MAX_CHARS = 250;
 
 export default function CaseHistoryPage() {
@@ -30,6 +31,7 @@ export default function CaseHistoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
+  const {user} = useCurrentUser()
   // const [emotional_state, set_emotional_state] = useState<CharacterExpression>(CharacterExpression.CALM)
 
 
@@ -176,6 +178,7 @@ export default function CaseHistoryPage() {
             >
               {msg.role === "USER" && (
                 <Avatar className="w-9 h-9 flex-shrink-0">
+                  {user?.image && <AvatarImage src={user.image ?? ""} alt={user.name ?? "User"} />}
                   <AvatarFallback>
                     <UserRound size={22} />
                   </AvatarFallback>

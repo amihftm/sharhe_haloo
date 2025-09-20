@@ -11,6 +11,15 @@ export enum CharacterExpression {
   IRRITATED = 3,
   CONFUSED = 4,
   GRATEFUL = 5,
+  // CALM = 0,
+  // HAPPY = 1,
+  // SAD = 2,
+  // FEARFUL = 3,
+  // ANGRY = 4,
+  // SURPRISED = 5,
+  // DISGURSTED = 6,
+  // CONFUSED = 7,
+  // CRY = 8,
 }
 
 // Defines the props the component will accept
