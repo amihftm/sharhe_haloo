@@ -9,6 +9,8 @@ interface CaseStepContextType {
   highestCompletedStep: number;
   completeStep: (stepIndex: number) => void;
   isProgressLoading: boolean;
+  emotionalState: number;
+  setEmtionalState: (state: number) => void
 }
 
 const CaseStepContext = createContext<CaseStepContextType | undefined>(undefined);
@@ -16,6 +18,7 @@ const CaseStepContext = createContext<CaseStepContextType | undefined>(undefined
 export function CaseStepProvider({ children }: { children: ReactNode }) {
   const params = useParams();
   const caseId = params.caseId as string;
+  const [emotionalState, setEmtionalState] = useState(0)
 
   const [highestCompletedStep, setHighestCompletedStep] = useState(-1);
   const [isProgressLoading, setIsProgressLoading] = useState(true);
@@ -40,7 +43,7 @@ export function CaseStepProvider({ children }: { children: ReactNode }) {
     setHighestCompletedStep((prev) => Math.max(prev, stepIndex));
   };
 
-  const value = { highestCompletedStep, completeStep, isProgressLoading };
+  const value = { highestCompletedStep, completeStep, isProgressLoading, emotionalState, setEmtionalState };
 
   return (
     <CaseStepContext.Provider value={value}>

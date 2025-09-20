@@ -1,5 +1,6 @@
 'use client';
 
+import { useCaseStep } from '@/app/dashboard/student/cases/[caseId]/_components/CaseStepProvider';
 import { useRive, useStateMachineInput } from '@rive-app/react-canvas';
 import { useEffect } from 'react';
 
@@ -14,11 +15,11 @@ export enum CharacterExpression {
 
 // Defines the props the component will accept
 interface CharacterProps {
-  expression: CharacterExpression;
   className?: string; // Optional className for custom styling
 }
 
-export default function Character({ expression, className }: CharacterProps) {
+export default function Character({ className }: CharacterProps) {
+  const {emotionalState} = useCaseStep()
   // 1. Hook to load your Rive file and get the component to render
   const { rive, RiveComponent } = useRive({
     src: '/rives/main.riv',
@@ -37,9 +38,9 @@ export default function Character({ expression, className }: CharacterProps) {
   useEffect(() => {
     // Make sure the input from Rive is ready before trying to change its value
     if (expressionStateInput) {
-      expressionStateInput.value = expression;
+      expressionStateInput.value = emotionalState;
     }
-  }, [expression, expressionStateInput]);
+  }, [emotionalState, expressionStateInput]);
 
   return (
     <div className={className}>

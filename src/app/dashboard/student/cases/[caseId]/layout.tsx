@@ -1,6 +1,7 @@
 import { CaseDetailsCard } from '@/components/cases/CaseDetailsCard';
 import { CaseStepProvider } from './_components/CaseStepProvider';
 import { CaseStepperNav } from './_components/CaseStepperNav';
+import Character from '@/components/shared/Character';
 
 interface CaseLayoutProps {
   children: React.ReactNode;
@@ -28,6 +29,7 @@ export default async function CaseLayout({ children, params }: CaseLayoutProps) 
             <div className="lg:mt-4 ">
               <CaseStepperNav />
             </div>
+          <Character className='flex md:h-96 h-64 justify-center'/>
           </div>
         </aside>
 

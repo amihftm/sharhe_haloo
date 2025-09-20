@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useTransition, FormEvent } from 'react';
+import { useState, useEffect, useRef, useTransition, FormEvent, KeyboardEvent } from 'react';
 import { useParams } from 'next/navigation';
 import {
   getOrCreateCaseAttempt,
@@ -14,22 +14,23 @@ import { cn } from '@/lib/utils';
 import { SendHorizontal, Bot, Loader2, UserRound } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useCaseStep } from '../_components/CaseStepProvider';
-import Character, { CharacterExpression } from '@/components/shared/Character';
-
+import { CharacterExpression } from '@/components/shared/Character';
+import { Textarea } from '@/components/ui/textarea';
 const MAX_CHARS = 250;
 
 export default function CaseHistoryPage() {
   const params = useParams();
-  const { completeStep } = useCaseStep();
+  const { completeStep, setEmtionalState } = useCaseStep();
   const caseId = params.caseId as string;
-
+  
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatHistory['messages']>([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
-  const [emotional_state, set_emotional_state] = useState<CharacterExpression>(CharacterExpression.CALM)
+  // const [emotional_state, set_emotional_state] = useState<CharacterExpression>(CharacterExpression.CALM)
 
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -45,13 +46,13 @@ export default function CaseHistoryPage() {
           if (!!last_message && !!last_message.emotional_states) {
             const expression = last_message.emotional_states.toUpperCase() as unknown as CharacterExpression
             // @ts-expect-error hell-no it is not complicated.
-            set_emotional_state(CharacterExpression[expression])
+            setEmtionalState(CharacterExpression[expression])
           } else {
             const result = await getCaseEmotionalState(caseId)
             if (result.success && !!result.data) {
               const expression = result.data.state.toUpperCase() as unknown as CharacterExpression
             // @ts-expect-error hell-no it is not complicated.
-            set_emotional_state(CharacterExpression[expression])
+            setEmtionalState(CharacterExpression[expression])
             }
           }
           setMessages(result.data.messages);
@@ -62,7 +63,7 @@ export default function CaseHistoryPage() {
       } catch (e) {
         setError('An unexpected error occurred.');
         console.log(e)
-        set_emotional_state(CharacterExpression.CONFUSED)
+        setEmtionalState(CharacterExpression.CONFUSED)
       } finally {
         setIsLoading(false);
       }
@@ -76,6 +77,24 @@ export default function CaseHistoryPage() {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [messages, isPending]);
+
+  // Auto-resize textarea height based on content
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto'; // Reset height to calculate new scrollHeight
+      const scrollHeight = textarea.scrollHeight;
+      const maxHeight = 200; // Cap the height at 200px
+      
+      if (scrollHeight > maxHeight) {
+        textarea.style.height = `${maxHeight}px`;
+        textarea.style.overflowY = 'auto';
+      } else {
+        textarea.style.height = `${scrollHeight}px`;
+        textarea.style.overflowY = 'hidden';
+      }
+    }
+  }, [newMessage]);
 
   const handleSendMessage = (e: FormEvent) => {
     e.preventDefault();
@@ -94,7 +113,7 @@ export default function CaseHistoryPage() {
         setMessages((prev) => [...prev, aiMessage]);
         const expression = aiMessage.emotional_states.toUpperCase() as unknown as CharacterExpression
         // @ts-expect-error hell-no it is not complicated.
-        set_emotional_state(CharacterExpression[expression])
+        setEmtionalState(CharacterExpression[expression])
         // Mark this step as "completed" so the user can proceed.
         // You might want more complex logic here later.
         completeStep(0);
@@ -104,7 +123,7 @@ export default function CaseHistoryPage() {
           content: `متاسفانه خطایی رخ داد: ${result.error}`,
           emotional_states: 'CONFUSED'
         };
-        set_emotional_state(CharacterExpression.CONFUSED)
+        setEmtionalState(CharacterExpression.CONFUSED)
         // Add an error message to the chat
         setMessages((prev) => [...prev, errorMessage]);
         // Revert the optimistic update by removing the user's message
@@ -130,14 +149,22 @@ export default function CaseHistoryPage() {
     );
   }
 
+  // Handle Enter key for sending, Shift+Enter for new line
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e as any);
+    }
+  };
+
   return (
-    <div className="relative flex flex-col h-full">
-        <Character expression={emotional_state} className='flex md:h-96 h-64 justify-center md:sticky md:top-24'/>
-      <div className="flex flex-col h-full bg-background rounded-lg border">
+    <div className="relative flex flex-col h-full border bg-card">
+        
+      <div className="flex flex-col h-[calc(100vh-8rem)] bg-background rounded-lg border">
         {/* Scrollable Chat Area */}
         <div
           ref={scrollAreaRef}
-          className="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth"
+          className="flex-1 overflow-y-scroll p-4 space-y-6 scroll-smooth"
         >
           {messages.map((msg, index) => (
             <div
@@ -190,21 +217,23 @@ export default function CaseHistoryPage() {
         </div>
 
         {/* Sticky Input Form */}
-        <div className="flex-shrink-0 p-4 pt-2 bg-background border-t">
-          <form onSubmit={handleSendMessage} className="relative">
-            <Input
+        <div className="flex-shrink-0 border-t bg-background p-2">
+        <form onSubmit={handleSendMessage} className="flex items-end gap-2">
+          <div className="relative flex-1">
+            <Textarea
+              ref={textareaRef}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="سوال خود را بپرسید..."
+              onKeyDown={handleKeyDown}
+              placeholder="سوال خود را بپرسید... (Shift+Enter برای خط جدید)"
               disabled={isPending}
               maxLength={MAX_CHARS}
-              className="h-12 text-base pe-32 rounded-full"
+              rows={1}
+              className="w-full resize-none overflow-hidden rounded-lg p-3 pr-4 pl-20 text-base"
+              style={{ minHeight: '48px' }}
               dir="rtl"
             />
-            <div
-              className="absolute left-20 top-1/2 -translate-y-1/2 text-xs text-muted-foreground"
-              dir="ltr"
-            >
+            <div className="absolute bottom-2 left-10 text-xs text-muted-foreground" dir="ltr">
               {newMessage.length} / {MAX_CHARS}
             </div>
             <Button
@@ -220,6 +249,7 @@ export default function CaseHistoryPage() {
               )}
               <span className="sr-only">ارسال پیام</span>
             </Button>
+          </div>
           </form>
         </div>
       </div>
