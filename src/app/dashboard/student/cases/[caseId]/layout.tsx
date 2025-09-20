@@ -35,7 +35,7 @@ export default async function CaseLayout({ children, params }: CaseLayoutProps) 
 
         {/* Right Column: This column is now a flex container that establishes a height boundary. */}
         {/* The `min-h-0` is crucial for allowing the child component to control scrolling. */}
-        <main className="lg:col-span-2 flex flex-col min-h-0 max-h-96 lg:max-h-full">
+        <main className="lg:col-span-2 flex flex-1 flex-col min-h-0 max-h-96 lg:max-h-full">
           {/* The page component rendered here as {children} is now responsible for its own scrolling. */}
           {children}
         </main>

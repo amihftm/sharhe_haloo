@@ -1,5 +1,12 @@
+'use client'
+import { usePathname } from "next/navigation";
+
 export function AppFooter() {
   const currentYear = new Date().getFullYear();
+  const pathname = usePathname()
+  if(pathname.startsWith('/dashboard/student/cases/')){
+    return 
+  }
 
   return (
     <footer className="absolute bottom-0 w-full border-t justify-items-center">
