@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
+      "bb": "next build",
     "start": "next start",
     "lint": "eslint",
     "DB init": "C:/Users/AmirH/Development/mongodb_bin/bin/mongod.exe --dbpath=C:/Users/AmirH/Desktop/Development/next.js/mongodbRepl --replSet rs0 --port 27017"
