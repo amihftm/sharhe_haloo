@@ -58,13 +58,13 @@ type ehr_values = {
 
 export default function WritingHistoryPage() {
   const [isPending, startTransition] = useTransition();
-  const [attemptId, setAttemptId] = useState<string | null>(null);
   const [submissionResult, setSubmissionResult] = useState<{ score: number; feedback: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { completeStep } = useCaseStep();
   const params = useParams();
   const router = useRouter();
   const caseId = params.caseId as string;
+  const {history_taken, attemptId, setTaken_history} = useCaseStep()
 
   const form = useForm<WrittenHistoryValues>({
     resolver: zodResolver(writtenHistorySchema),
@@ -82,9 +82,8 @@ export default function WritingHistoryPage() {
 
   useEffect(() => {
     getOrCreateCaseAttempt(caseId).then((res) => {
-      if (res.success && res.data) setAttemptId(res.data.attemptId);
-      if (res.data?.writtenHistory) {
-        const hr = res.data.writtenHistory as ehr_values
+      if (!!history_taken) {
+        const hr = history_taken as ehr_values
         form.setValue('chiefComplaint', hr.chiefComplaint || "")
         form.setValue('presentIllness', hr.presentIllness || "")
         form.setValue('pastMedicalHistory', hr.pastMedicalHistory || "")
@@ -121,6 +120,49 @@ export default function WritingHistoryPage() {
   function handleNavigateNext() {
     router.push(`./investigations`);
   }
+
+  const {watch} = form
+
+  const [
+    chiefComplaint,
+    presentIllness,
+    pastMedicalHistory,
+    drugHistory,
+    allergies,
+    familyHistory,
+    socialHistory,
+    reviewOfSystems,
+  ] = watch([
+    "chiefComplaint",
+    "presentIllness",
+    "pastMedicalHistory",
+    "drugHistory",
+    "allergies",
+    "familyHistory",
+    "socialHistory",
+    "reviewOfSystems",
+  ]);
+  useEffect(() => {
+    const hr = {
+      chiefComplaint,
+      presentIllness,
+      pastMedicalHistory,
+      drugHistory,
+      allergies,
+      familyHistory,
+      socialHistory,
+      reviewOfSystems,
+    };
+    setTaken_history(hr)
+  }, [chiefComplaint,
+    presentIllness,
+    pastMedicalHistory,
+    drugHistory,
+    allergies,
+    familyHistory,
+    socialHistory,
+    reviewOfSystems,])
+
 
   return (
     <div className="flex flex-col h-full">
